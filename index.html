@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <style media="screen">
+    #map {
+      width: 800px;
+      height: 600px;
+      background-color: grey;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>Elm-Land</h3>
+  <div id="elm"></div>
+  <h3>JavaScript-Land</h3>
+  <div id="map"></div>
+
+  <script src="main.js"></script>
+  <script src="/google_map_api"></script>
+  <script type="text/javascript">
+    // initialize google map
+    var mapDiv = document.getElementById('map');
+    var myLatlng = new google.maps.LatLng(0, 0);
+    var mapOptions = {
+      zoom: 6,
+      center: myLatlng
+    };
+    var gmap = new google.maps.Map(mapDiv, mapOptions);
+
+    // initialize elm app
+    var app = Elm.Main.init({ node: document.getElementById('elm') });
+    var markers = [];
+
+    // outgoing Port: User clicks a button | elm -> js
+    app.ports.moveMap.subscribe(function (gmPos) {
+      console.log("received", gmPos);
+      var myLatlng = new google.maps.LatLng(gmPos);
+      gmap.setCenter(myLatlng);
+      const marker = new google.maps.Marker({
+	  map:gmap,
+	  position: myLatlng});
+      markers.push(marker);
+      if (markers.length %5 == 2 ){
+        for (let i = 0; i < markers.length; i++){
+          markers[i].setMap(null);
+	    }
+      } else if(markers.length %5 == 4 ) {
+        for (let i = 0; i < markers.length; i++) {
+          markers[i].setMap(gmap);
+        }
+      }
+    });
+
+    // incoming Port: User drags the map | js -> elm
+    gmap.addListener('drag', function () {
+      var newPos = {
+        lat: gmap.getCenter().lat(),
+        lng: gmap.getCenter().lng()
+      };
+      app.ports.mapMoved.send(newPos);
+    });
+  </script>
+</body>
+
+</html>
