@@ -33,10 +33,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     api_key = ""
     def do_GET(self):
         if self.path == '/api':
+            res = {'lat':10, 'lng':20}
+
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"message": "Hello, API!"}).encode('utf-8'))
+            self.wfile.write(json.dumps(res).encode())
         elif self.path.startswith("/google_map_api"):
             #https://maps.googleapis.com/maps/api/js?key=
 
@@ -53,6 +55,17 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 # Respond with an error status
                 self.send_error(500)
+        elif self.path == "/test-data.json":
+            test_data = [{'key':"1",
+                          'vec':[[
+                              ["139.0", "35.2", "139.1", "35.1", "1", "1"],
+                              ["139.0", "35.2", "139.1", "35.11", "1", "0"],
+                              ["139.0", "35.2", "139.1", "35.12", "1", "1"],
+                          ]]}]
+            self.send_response(200)
+            self.send_header('Content-type', 'application/javascript')
+            self.end_headers()
+            self.wfile.write(json.dumps(test_data).encode())
 
         else:
             super().do_GET()
