@@ -91,19 +91,6 @@ getRoadProp =
         }
 
 
-posDecoder : Decoder GMPos
-posDecoder =
-    map2 GMPos (field "lat" float) (field "lng" float)
-
-
-getLoc : Cmd Msg
-getLoc =
-    Http.get
-        { url = "/api"
-        , expect = Http.expectJson GotLoc posDecoder
-        }
-
-
 findRoadPropAttr : String -> Dict Int RPAttr -> Maybe ( Int, RPAttr )
 findRoadPropAttr name rpAttr =
     Dict.toList rpAttr
@@ -111,26 +98,8 @@ findRoadPropAttr name rpAttr =
         |> List.head
 
 
-mask : Dict Int RPAttr -> EdgeProp -> String -> Maybe a -> Maybe a
-mask attrs vs name mb =
-    findRoadPropAttr name attrs
-        |> Maybe.andThen
-            (\( _, rpAttr ) ->
-                if rpAttr.rpType == RPIBool then
-                    mb
-
-                else
-                    Nothing
-            )
-
-
 
 -- Helper functions
-
-
-extract : List SegmentProps -> (EdgeProp -> a) -> List a
-extract _ _ =
-    []
 
 
 exStartNode : EdgeProp -> Maybe GMPos
