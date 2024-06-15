@@ -1,5 +1,6 @@
 module MainTests exposing (..)
 
+import Dict exposing (fromList)
 import Expect
 import Main exposing (exStartNode)
 import Maybe exposing (withDefault)
@@ -14,8 +15,8 @@ defaultPos =
     }
 
 
-tests : Test
-tests =
+test_exStartNode : Test
+test_exStartNode =
     -- It's important to consider about rounding error.
     describe "Testing exStartNode function"
         [ test "with valid latitude and longitude" <|
@@ -38,4 +39,26 @@ tests =
                 exStartNode []
                     |> Maybe.withDefault defaultPos
                     |> (.lng >> Expect.equal 0.0)
+        ]
+
+
+test_evalEdgeProp : Test
+test_evalEdgeProp =
+    describe "Testing evalEdgeProp function"
+        [ test "evalEdgeProp valid" <|
+            \_ ->
+                Main.evalEdgeProp [ "0", "1" ]
+                    ([ { name = "prop1"
+                       , rpType = Main.RPIBool
+                       , semantic = Main.Edge
+                       }
+                     , { name = "prop1"
+                       , rpType = Main.RPIBool
+                       , semantic = Main.StartNode
+                       }
+                     ]
+                        |> List.indexedMap Tuple.pair
+                        |> Dict.fromList
+                    )
+                    |> Expect.equal [ Just False, Just True ]
         ]

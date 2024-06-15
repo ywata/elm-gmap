@@ -49,6 +49,7 @@ type RPType
 
 type RPSemantic
     = StartNode
+    | EndNode
     | Edge
     | Quantity
 
@@ -67,6 +68,11 @@ type alias Model =
     , rpAttr : Dict Int RPAttr
     , rpAttrState : Dict Int Bool
     }
+
+
+type GMData a
+    = Point a
+    | PolyLine (List a)
 
 
 roadPropDecoder : Decoder RoadProp
@@ -159,6 +165,149 @@ exEdge vs =
     Maybe.map2 (\x y -> [ x, y ]) s e
 
 
+isJust : Maybe a -> Bool
+isJust rs =
+    case rs of
+        Just _ ->
+            True
+
+        _ ->
+            False
+
+
+classifyByKey : List ( comparable, a ) -> Dict comparable (List a)
+classifyByKey list =
+    List.foldl addKeyValuePair Dict.empty list
+
+
+addKeyValuePair ( k, v ) dict =
+    let
+        updateFunction maybeList =
+            case maybeList of
+                Just oldList ->
+                    Just (oldList ++ [ v ])
+
+                Nothing ->
+                    Just [ v ]
+    in
+    Dict.update k updateFunction dict
+
+
+evalEdgeProp : Dict Int RPAttr -> EdgeProp -> Dict Int (List (GMData GMPos))
+evalEdgeProp rpaDic ep =
+    let
+        epp =
+            List.indexedMap Tuple.pair ep
+                |> List.map
+                    (\( i, attr ) ->
+                        Dict.get i rpaDic
+                            |> Maybe.map (\val -> ( i, val, ep ))
+                    )
+                |> List.filter isJust
+                |> List.map
+                    (Maybe.withDefault
+                        ( -1, { name = "", rpType = RPFloat, semantic = Edge }, [] )
+                    )
+                |> List.map
+                    (\( i, attr, epx ) ->
+                        case ( attr.rpType, attr.semantic ) of
+                            ( RPIBool, Edge ) ->
+                                exEdge ep
+                                    |> Maybe.map (\v -> ( i, PolyLine v ))
+
+                            ( RPIBool, StartNode ) ->
+                                exStartNode ep
+                                    |> Maybe.map (\v -> ( i, Point v ))
+
+                            --Just ( i, exStartNode ep |> Maybe.map Marker )
+                            ( RPIBool, EndNode ) ->
+                                exEndNode ep
+                                    |> Maybe.map (\v -> ( i, Point v ))
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.filter isJust
+                |> List.map (Maybe.withDefault ( -1, Point { lat = 0.0, lng = 0.0 } ))
+    in
+    classifyByKey epp
+
+
+isPoint : GMData a -> Bool
+isPoint g =
+    case g of
+        Point _ ->
+            True
+
+        _ ->
+            False
+
+
+isPolyLine : GMData a -> Bool
+isPolyLine g =
+    case g of
+        PolyLine _ ->
+            True
+
+        _ ->
+            False
+
+
+nullify : Maybe ( a, List b ) -> Maybe ( a, List b )
+nullify a =
+    case a of
+        Nothing ->
+            Nothing
+
+        Just ( _, [] ) ->
+            Nothing
+
+        otherwise ->
+            otherwise
+
+
+getPointsByIndex : Dict Int (List (GMData GMPos)) -> Int -> Maybe ( Int, List GMPos )
+getPointsByIndex d i =
+    Dict.get i d
+        |> Maybe.map
+            (\v ->
+                v
+                    |> List.filter isPoint
+                    |> List.map
+                        (\g ->
+                            case g of
+                                Point a ->
+                                    a
+
+                                _ ->
+                                    { lat = 0.0, lng = 0.0 }
+                        )
+            )
+        |> Maybe.map (\v -> ( i, v ))
+        |> nullify
+
+
+getPolyLinesByIndex : Dict Int (List (GMData GMPos)) -> Int -> Maybe ( Int, List (List GMPos) )
+getPolyLinesByIndex d i =
+    Dict.get i (Debug.log "getPolyLinesByIndex" d)
+        |> Maybe.map
+            (\v ->
+                v
+                    |> List.filter isPolyLine
+                    |> List.map
+                        (\g ->
+                            case g of
+                                PolyLine a ->
+                                    a
+
+                                _ ->
+                                    [ { lat = 0.0, lng = 0.0 } ]
+                        )
+            )
+        |> Maybe.map (\v -> ( i, v ))
+        |> nullify
+
+
 
 -- UPDATE
 
@@ -194,34 +343,46 @@ update msg model =
 
         GotRoadProp (Ok rps) ->
             let
-                all_edges =
+                all =
                     rps
                         |> List.map .vec
-                        |> List.map (List.map (List.map (\x -> ( x, exEdge x ))))
+                        |> List.map (List.map (List.map (evalEdgeProp model.rpAttr)))
                         |> List.concat
                         |> List.concat
-                        |> List.map Tuple.second
-                        |> List.map (Maybe.withDefault [ { lat = 0.0, lng = 0.0 }, { lat = 0.0, lng = 0.0 } ])
+                        |> List.map Dict.toList
+                        |> List.concat
+                        |> classifyByKey
+                        |> Dict.map (\_ v -> List.concat v)
 
-                all_nodes =
-                    rps
-                        |> List.map .vec
-                        |> List.map (List.map (List.map (\x -> ( x, exStartNode x ))))
-                        |> List.concat
-                        |> List.concat
-                        |> List.map Tuple.second
-                        |> List.map (Maybe.withDefault { lat = 0.0, lng = 0.0 })
+                keys =
+                    Dict.keys all
 
-                _ =
-                    Debug.log "all_nodes" all_nodes
+                points =
+                    keys
+                        |> List.map (getPointsByIndex all)
+                        |> List.filter isJust
+                        |> List.map (Maybe.withDefault ( -1, [] ))
+
+                polylines =
+                    keys
+                        |> List.map (getPolyLinesByIndex all)
+                        |> List.filter isJust
+                        |> List.map (Maybe.withDefault ( -1, [] ))
+
+                pointCmds =
+                    points |> List.map registerNode
+
+                plCmds =
+                    polylines |> List.map registerPath
+
+                showCmds =
+                    keys |> List.map show
+
+                cmds =
+                    pointCmds ++ plCmds ++ showCmds
             in
             ( { model | roadProps = rps }
-            , Cmd.batch
-                [ registerNode ( 1, all_nodes )
-                , registerPath ( 2, all_edges )
-                , show 1
-                , show 2
-                ]
+            , Cmd.batch cmds
             )
 
         GotRoadProp (Err err) ->
@@ -371,7 +532,7 @@ init _ =
               }
             , { name = "prop1"
               , rpType = RPIBool
-              , semantic = Edge
+              , semantic = StartNode
               }
             , { name = "prop2"
               , rpType = RPIBool

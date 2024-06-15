@@ -80,9 +80,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == "/test-data.json":
             test_data = [{'key':"1",
                           'vec':[[
-                              ["35.2", "139.0", "35.2", "139.1", "1", "1"],
-                              ["35.201", "139.0", "35.201", "139.1", "1", "0"],
-                              ["35.202", "139.0", "35.202", "139.1", "1", "1"],
+                              ["35.2", "139.0", "35.2", "139.1", "1", "1", "1"],
+                              ["35.201", "139.0", "35.201", "139.1", "1", "0", "1"],
+                              ["35.202", "139.0", "35.202", "139.1", "1", "1", "0"],
                           ]]}]
             self.send_response(200)
             self.send_header('Content-type', 'application/javascript')

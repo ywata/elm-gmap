@@ -27,7 +27,6 @@
       const marker = new google.maps.Marker({
         position: myLatLng
       });
-      console.log("marker:", marker);
       return marker;
 
     }
@@ -46,7 +45,6 @@
 
     document.addEventListener("DOMContentLoaded", function() {
       // Your code goes here
-      console.log("DOM fully loaded and parsed");
       // initialize google map
       var mapDiv = document.getElementById('map');
       var myLatlng = new google.maps.LatLng(0, 0);
@@ -86,12 +84,10 @@
         }
       });
       app.ports.show.subscribe(function (key) {
-        console.log("key in show:", objDict);
         if (key in objDict) {
           let val = objDict[key];
           console.log("key:", key, val);
           for(let i = 0; i < val[1].length; i++) {
-            console.log("showing:",  val[1][i]);
             val[1][i].setMap(gmap);
           }
 
@@ -101,7 +97,6 @@
 
       });
       app.ports.hide.subscribe(function (key) {
-        console.log("hide:", key);
         if (key in objDict) {
           let val = objDict[key];
           if (val[0] == 'node') {
