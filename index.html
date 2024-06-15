@@ -11,59 +11,143 @@
       background-color: grey;
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
 </head>
 
 <body>
   <h3>Elm-Land</h3>
   <div id="elm"></div>
-  <h3>JavaScript-Land</h3>
-  <div id="map"></div>
+
 
   <script src="main.js"></script>
   <script src="/google_map_api"></script>
   <script type="text/javascript">
-    // initialize google map
-    var mapDiv = document.getElementById('map');
-    var myLatlng = new google.maps.LatLng(0, 0);
-    var mapOptions = {
-      zoom: 6,
-      center: myLatlng
-    };
-    var gmap = new google.maps.Map(mapDiv, mapOptions);
+    function createMarker(pos) {
+      var myLatLng = new google.maps.LatLng(pos);
+      const marker = new google.maps.Marker({
+        position: myLatLng
+      });
+      console.log("marker:", marker);
+      return marker;
+
+    }
+    function createPolyLine(poss) {
+      var polyLine = new google.maps.Polyline({
+        path: poss,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+      });
+      return polyLine;
+    }
+    let gmap = null;
+    var objDict = {}
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Your code goes here
+      console.log("DOM fully loaded and parsed");
+      // initialize google map
+      var mapDiv = document.getElementById('map');
+      var myLatlng = new google.maps.LatLng(0, 0);
+      var mapOptions = {
+        zoom: 6,
+        center: myLatlng
+      };
+      gmap = new google.maps.Map(mapDiv, mapOptions);
+      app.ports.registerNode.subscribe(function (arg) {
+        let key = arg[0];
+        let poss = arg[1];
+        if (key in objDict) {
+          console.log(('node', key) + " is already registered");
+        } else {
+          let markers = [];
+          for(let i = 0; i < poss.length; i ++) {
+            let marker = createMarker(poss[i]);
+            markers.push(marker);
+          }
+          objDict[key] = ['node', markers];
+
+        }
+      });
+      app.ports.registerPath.subscribe(function (arg) {
+        let key = arg[0];
+        let poss = arg[1];
+        if (key in objDict) {
+          console.log(('path', key) + " is already registered");
+        } else {
+          let polyLines = [];
+          for(let i = 0; i < poss.length; i ++) {
+            let polyLine = createPolyLine(poss[i]);
+            polyLines.push(polyLine);
+          }
+          objDict[key] = ['path', polyLines];
+
+        }
+      });
+      app.ports.show.subscribe(function (key) {
+        console.log("key in show:", objDict);
+        if (key in objDict) {
+          let val = objDict[key];
+          console.log("key:", key, val);
+          for(let i = 0; i < val[1].length; i++) {
+            console.log("showing:",  val[1][i]);
+            val[1][i].setMap(gmap);
+          }
+
+        } else {
+
+        }
+
+      });
+      app.ports.hide.subscribe(function (key) {
+        console.log("hide:", key);
+        if (key in objDict) {
+          let val = objDict[key];
+          if (val[0] == 'node') {
+            for(let i = 0; i < val[1].length; i++) {
+              console.log("hiding:",  val[1][i]);
+              val[1][i].setMap(null);
+            }
+          }
+
+        } else {
+
+        }
+
+      });
+
+
+
+      // outgoing Port: User clicks a button | elm -> js
+      app.ports.moveMap.subscribe(function (gmPos) {
+        console.log("received", gmPos);
+        var myLatlng = new google.maps.LatLng(gmPos);
+        gmap.setCenter(myLatlng);
+        const marker = new google.maps.Marker({
+          map:gmap,
+          position: myLatlng});
+        markers.push(marker);
+        for (let i = 0; i < markers.length; i++) {
+          markers[i].setMap(gmap);
+        }
+      });
+
+
+    });
 
     // initialize elm app
     var app = Elm.Main.init({ node: document.getElementById('elm') });
     var markers = [];
 
-    // outgoing Port: User clicks a button | elm -> js
-    app.ports.moveMap.subscribe(function (gmPos) {
-      console.log("received", gmPos);
-      var myLatlng = new google.maps.LatLng(gmPos);
-      gmap.setCenter(myLatlng);
-      const marker = new google.maps.Marker({
-	  map:gmap,
-	  position: myLatlng});
-      markers.push(marker);
-      if (markers.length %5 == 2 ){
-        for (let i = 0; i < markers.length; i++){
-          markers[i].setMap(null);
-	    }
-      } else if(markers.length %5 == 4 ) {
-        for (let i = 0; i < markers.length; i++) {
-          markers[i].setMap(gmap);
-        }
-      }
-    });
 
-    // incoming Port: User drags the map | js -> elm
-    gmap.addListener('drag', function () {
-      var newPos = {
-        lat: gmap.getCenter().lat(),
-        lng: gmap.getCenter().lng()
-      };
-      app.ports.mapMoved.send(newPos);
-    });
+
   </script>
 </body>
 
 </html>
+
+
+
+
+
