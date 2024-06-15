@@ -299,7 +299,7 @@ update msg model =
                     movePos model.pos direction
             in
             ( { model | pos = newPos, path = model.path ++ [ newPos ] }
-            , moveMap newPos
+            , hide 6
             )
 
         MapMoved newPos ->
@@ -345,7 +345,11 @@ update msg model =
                     polylines |> List.map registerPath
 
                 showCmds =
-                    keys |> List.map show
+                    model.rpAttrState
+                        |> Dict.toList
+                        |> List.filter Tuple.second
+                        |> List.map Tuple.first
+                        |> List.map show
 
                 cmds =
                     pointCmds ++ plCmds ++ showCmds
@@ -366,10 +370,24 @@ update msg model =
         ToggleRpAttrState id ->
             let
                 _ =
-                    Debug.log "ToggleRpAttrState" model.rpAttrState
+                    Debug.log "ToggleRpAttrState" ( id, Dict.get id model.rpAttrState )
+
+                currState =
+                    Dict.get id model.rpAttrState
+
+                cmd =
+                    case currState of
+                        Nothing ->
+                            Cmd.none
+
+                        Just True ->
+                            hide id
+
+                        Just False ->
+                            show id
             in
             ( { model | rpAttrState = Dict.update id (Maybe.map not) model.rpAttrState }
-            , hide 1
+            , cmd
             )
 
         otherwise ->

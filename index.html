@@ -99,7 +99,7 @@
       app.ports.hide.subscribe(function (key) {
         if (key in objDict) {
           let val = objDict[key];
-          if (val[0] == 'node') {
+          if (val[0] == 'node' || val[0] == 'path') {
             for(let i = 0; i < val[1].length; i++) {
               console.log("hiding:",  val[1][i]);
               val[1][i].setMap(null);
