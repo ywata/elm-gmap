@@ -217,10 +217,10 @@ update msg model =
             in
             ( { model | roadProps = rps }
             , Cmd.batch
-                [ registerNode ( "1", all_nodes )
-                , registerPath ( "2", all_edges )
-                , show "1"
-                , show "2"
+                [ registerNode ( 1, all_nodes )
+                , registerPath ( 2, all_edges )
+                , show 1
+                , show 2
                 ]
             )
 
@@ -239,7 +239,7 @@ update msg model =
                     Debug.log "ToggleRpAttrState" model.rpAttrState
             in
             ( { model | rpAttrState = Dict.update id (Maybe.map not) model.rpAttrState }
-            , hide "1"
+            , hide 1
             )
 
         otherwise ->

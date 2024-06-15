@@ -7,16 +7,16 @@ import SharedModels exposing (..)
 -- PORTS
 
 
-port registerNode : ( String, List GMPos ) -> Cmd msg
+port registerNode : ( Int, List GMPos ) -> Cmd msg
 
 
-port registerPath : ( String, List (List GMPos) ) -> Cmd msg
+port registerPath : ( Int, List (List GMPos) ) -> Cmd msg
 
 
-port show : String -> Cmd msg
+port show : Int -> Cmd msg
 
 
-port hide : String -> Cmd msg
+port hide : Int -> Cmd msg
 
 
 port moveMap : GMPos -> Cmd msg
