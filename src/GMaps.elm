@@ -1,6 +1,6 @@
-port module GMaps exposing (..)
+port module GMaps exposing (hide, mapMoved, moveMap, registerNode, registerPath, show)
 
-import SharedModels exposing (..)
+import SharedModels exposing (GMPos)
 
 
 

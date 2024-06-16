@@ -1,4 +1,4 @@
-module SharedModels exposing (..)
+module SharedModels exposing (GMPos)
 
 
 type alias GMPos =

@@ -1,14 +1,14 @@
-module Main exposing (..)
+module Main exposing (GMData(..), RPSemantic(..), RPType(..), evalEdgeProp, exStartNode)
 
 import Browser
 import Debug
-import Dict exposing (..)
-import GMaps exposing (..)
+import Dict exposing (Dict, update)
+import GMaps exposing (hide, mapMoved, moveMap, registerNode, registerPath, show)
 import Html exposing (Html, button, div, input, p, text)
 import Html.Attributes as Attr exposing (class, id)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Decode exposing (Decoder, field, float, int, map2)
+import Json.Decode as Decode exposing (Decoder)
 import List.Extra exposing (getAt)
 import SharedModels exposing (GMPos)
 
@@ -17,6 +17,7 @@ import SharedModels exposing (GMPos)
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -39,12 +40,13 @@ type alias SegmentProps =
 
 
 type alias RoadProp =
-    { key : String, vec : List (List (List String)) }
+    { key : String
+    , vec : List SegmentProps
+    }
 
 
 type RPType
-    = RPInt
-    | RPIBool
+    = RPIBool
     | RPFloat
 
 
@@ -90,13 +92,6 @@ getRoadProp =
         { url = "/test-data.json"
         , expect = Http.expectJson GotRoadProp (Decode.list roadPropDecoder)
         }
-
-
-findRoadPropAttr : String -> Dict Int RPAttr -> Maybe ( Int, RPAttr )
-findRoadPropAttr name rpAttr =
-    Dict.toList rpAttr
-        |> List.filter (\( key, rp ) -> rp.name == name)
-        |> List.head
 
 
 
@@ -163,6 +158,7 @@ classifyByKey list =
     List.foldl addKeyValuePair Dict.empty list
 
 
+addKeyValuePair : ( comparable, v ) -> Dict comparable (List v) -> Dict comparable (List v)
 addKeyValuePair ( k, v ) dict =
     let
         updateFunction maybeList =
@@ -182,7 +178,7 @@ evalEdgeProp rpaDic ep =
         epp =
             List.indexedMap Tuple.pair ep
                 |> List.map
-                    (\( i, attr ) ->
+                    (\( i, _ ) ->
                         Dict.get i rpaDic
                             |> Maybe.map (\val -> ( i, val, ep ))
                     )
@@ -241,16 +237,17 @@ isPolyLine g =
 
 
 nullify : Maybe ( a, List b ) -> Maybe ( a, List b )
-nullify a =
-    case a of
-        Nothing ->
-            Nothing
+nullify mb =
+    mb
+        |> Maybe.andThen
+            (\v ->
+                case v of
+                    ( _, [] ) ->
+                        Nothing
 
-        Just ( _, [] ) ->
-            Nothing
-
-        otherwise ->
-            otherwise
+                    otherwise ->
+                        Just otherwise
+            )
 
 
 getPointsByIndex : Dict Int (List (GMData GMPos)) -> Int -> Maybe ( Int, List GMPos )
@@ -302,7 +299,6 @@ getPolyLinesByIndex d i =
 type Msg
     = MapMoved GMPos
     | Load
-    | GotLoc (Result Http.Error GMPos)
     | GotRoadProp (Result Http.Error (List RoadProp))
     | ToggleRpAttrState Int
 
@@ -395,13 +391,6 @@ update msg model =
             , cmd
             )
 
-        otherwise ->
-            let
-                _ =
-                    Debug.log "Otherwise" otherwise
-            in
-            ( model, Cmd.none )
-
 
 
 -- VIEW
@@ -430,7 +419,7 @@ viewRoadPropCheckBoxes model =
 
         rpAttrIds =
             Dict.toList model.rpAttr
-                |> List.filter (\( k, v ) -> v.rpType == RPIBool)
+                |> List.filter (\( _, v ) -> v.rpType == RPIBool)
                 |> List.map Tuple.first
     in
     Html.div [] <| List.map checkBox rpAttrIds
@@ -460,7 +449,7 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     mapMoved MapMoved
 
 
