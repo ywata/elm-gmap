@@ -15,15 +15,14 @@
 </head>
 
 <body>
-  <h3>Elm-Land</h3>
   <div id="elm"></div>
-
 
   <script src="main.js"></script>
   <script src="/google_map_api"></script>
   <script type="text/javascript">
     function createMarker(pos) {
       var myLatLng = new google.maps.LatLng(pos);
+
       const marker = new google.maps.Marker({
         position: myLatLng
       });
@@ -116,18 +115,9 @@
 
       // outgoing Port: User clicks a button | elm -> js
       app.ports.moveMap.subscribe(function (gmPos) {
-        console.log("received", gmPos);
         var myLatlng = new google.maps.LatLng(gmPos);
         gmap.setCenter(myLatlng);
-        const marker = new google.maps.Marker({
-          map:gmap,
-          position: myLatlng});
-        markers.push(marker);
-        for (let i = 0; i < markers.length; i++) {
-          markers[i].setMap(gmap);
-        }
       });
-
 
     });
 
