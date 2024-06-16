@@ -282,8 +282,7 @@ getPolyLinesByIndex d i =
 
 
 type Msg
-    = Move Direction
-    | MapMoved GMPos
+    = MapMoved GMPos
     | Load
     | GotLoc (Result Http.Error GMPos)
     | GotRoadProp (Result Http.Error (List RoadProp))
@@ -293,15 +292,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Move direction ->
-            let
-                newPos =
-                    movePos model.pos direction
-            in
-            ( { model | pos = newPos, path = model.path ++ [ newPos ] }
-            , hide 6
-            )
-
         MapMoved newPos ->
             ( { model | pos = newPos }
             , Cmd.none
@@ -398,29 +388,6 @@ update msg model =
             ( model, Cmd.none )
 
 
-type Direction
-    = North
-    | South
-    | West
-    | East
-
-
-movePos : GMPos -> Direction -> GMPos
-movePos pos direction =
-    case direction of
-        North ->
-            { pos | lat = pos.lat + 1 }
-
-        South ->
-            { pos | lat = pos.lat - 1 }
-
-        West ->
-            { pos | lng = pos.lng - 1 }
-
-        East ->
-            { pos | lng = pos.lng + 1 }
-
-
 
 -- VIEW
 
@@ -460,11 +427,7 @@ view model =
         _ ->
             div []
                 [ div []
-                    [ button [ onClick (Move North) ] [ text "North" ]
-                    , button [ onClick (Move South) ] [ text "South" ]
-                    , button [ onClick (Move West) ] [ text "West" ]
-                    , button [ onClick (Move East) ] [ text "East" ]
-                    , button [ onClick Load ] [ text "Load" ]
+                    [ button [ onClick Load ] [ text "Load" ]
                     , viewRoadPropCheckBoxes model
                     ]
                 , div [ Attr.class "columns" ]
