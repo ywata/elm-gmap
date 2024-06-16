@@ -32,6 +32,10 @@ jobs:
           elm-version: 0.19.1
       - name: build Main
         run: elm make src/Main.elm --output=main.js
+
+      - name: install elm-test
+        run: npm install elm-test
+
       - name: run test
         run: elm-test
 
