@@ -26,15 +26,15 @@ jobs:
             runner: macos-latestˆ
             target: aarch64-apple-darwin  
     steps:
+      - uses: actions/setup-node@v4
+
       - uses: actions/checkout@v4
-      - uses: jorelali/setup-elm@v6
-        with:
-          elm-version: 0.19.1
-      - name: build Main
-        run: elm make src/Main.elm --output=main.js
 
       - name: install elm-test
-        run: npm install elm-test
+        run: npm install elm elm-test
+
+      - name: build Main
+        run: elm make src/Main.elm --output=main.js
 
       - name: run test
         run: elm-test

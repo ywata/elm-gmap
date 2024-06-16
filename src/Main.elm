@@ -419,7 +419,7 @@ viewRoadPropCheckBoxes model =
                     Dict.get id model.rpAttrState |> Maybe.withDefault False
 
                 propName =
-                    Dict.get id model.rpAttr |> Maybe.withDefault { name = "xxxx", rpType = RPIBool, semantic = Edge } |> .name
+                    Dict.get id model.rpAttr |> Maybe.withDefault { name = "should never used", rpType = RPIBool, semantic = Edge } |> .name
             in
             div []
                 [ input
