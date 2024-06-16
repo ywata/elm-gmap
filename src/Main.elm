@@ -196,9 +196,6 @@ evalEdgeProp rpaDic ep =
                         let
                             ibool =
                                 List.Extra.getAt i epx |> Maybe.andThen iboolToBool
-
-                            _ =
-                                Debug.log "evalEdgeProp" ( i, epx, ibool )
                         in
                         case ( attr.rpType, attr.semantic, ibool ) of
                             ( RPIBool, Edge, Just True ) ->
