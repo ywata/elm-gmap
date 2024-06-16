@@ -23,11 +23,15 @@ jobs:
             runner: macos-latest
             target: x86_64-apple-darwin
           - name: macos-arm64
-            runner: macos-latest
+            runner: macos-latestˆ
             target: aarch64-apple-darwin  
     steps:
       - uses: actions/checkout@v4
       - uses: jorelali/setup-elm@v6
         with:
           elm-version: 0.19.1
-      - run: elm make src/Main.elm
+      - name: build Main
+        run: elm make src/Main.elm --output=main.js
+      - name: run test
+        run: elm-test
+
