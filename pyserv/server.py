@@ -42,7 +42,7 @@ def read_cache_or_request(cache_path, get_url):
             content = f.read()
             return DummyResponse(200, content)
     response = requests.get(get_url)
-    if response.status_code == 200:
+    if response.status_code == 200 and cache_path is not None:
         with open(cache_path, "wb") as f:
             f.write(response.content)
     return response
@@ -65,7 +65,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
 
             # Request Google Map's JavaScript API code
-            api_url = f'https://maps.googleapis.com/maps/api/js?key={self.api_key}'
+            api_url = f'https://maps.googleapis.com/maps/api/js?key={self.api_key}&libraries=marker'
             response = read_cache_or_request(self.js_cache_path, api_url)
 
             if response.status_code == 200:
@@ -80,9 +80,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == "/test-data.json":
             test_data = [{'key':"1",
                           'vec':[[
-                              ["35.2", "139.0", "35.2", "139.1", "1", "1", "1"],
-                              ["35.201", "139.0", "35.201", "139.1", "1", "0", "1"],
-                              ["35.202", "139.0", "35.202", "139.1", "1", "1", "0"],
+                              ["35.2",   "139.0", "35.2",   "139.1", "1", "1", "1", "0"],
+                              ["35.201", "139.0", "35.201", "139.1", "1", "0", "1", "1"],
+                              ["35.202", "139.0", "35.202", "139.1", "1", "1", "0", "1"],
                           ]]}]
             self.send_response(200)
             self.send_header('Content-type', 'application/javascript')

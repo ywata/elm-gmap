@@ -9,6 +9,7 @@ import Html.Attributes as Attr exposing (class, id)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, float, int, map2)
+import List.Extra exposing (getAt)
 import SharedModels exposing (GMPos)
 
 
@@ -102,6 +103,19 @@ findRoadPropAttr name rpAttr =
 -- Helper functions
 
 
+iboolToBool : String -> Maybe Bool
+iboolToBool s =
+    case s of
+        "0" ->
+            Just False
+
+        "1" ->
+            Just True
+
+        _ ->
+            Nothing
+
+
 exStartNode : EdgeProp -> Maybe GMPos
 exStartNode vs =
     case vs of
@@ -179,17 +193,24 @@ evalEdgeProp rpaDic ep =
                     )
                 |> List.map
                     (\( i, attr, epx ) ->
-                        case ( attr.rpType, attr.semantic ) of
-                            ( RPIBool, Edge ) ->
+                        let
+                            ibool =
+                                List.Extra.getAt i epx |> Maybe.andThen iboolToBool
+
+                            _ =
+                                Debug.log "evalEdgeProp" ( i, epx, ibool )
+                        in
+                        case ( attr.rpType, attr.semantic, ibool ) of
+                            ( RPIBool, Edge, Just True ) ->
                                 exEdge ep
                                     |> Maybe.map (\v -> ( i, PolyLine v ))
 
-                            ( RPIBool, StartNode ) ->
+                            ( RPIBool, StartNode, Just True ) ->
                                 exStartNode ep
                                     |> Maybe.map (\v -> ( i, Point v ))
 
                             --Just ( i, exStartNode ep |> Maybe.map Marker )
-                            ( RPIBool, EndNode ) ->
+                            ( RPIBool, EndNode, Just True ) ->
                                 exEndNode ep
                                     |> Maybe.map (\v -> ( i, Point v ))
 
@@ -359,9 +380,6 @@ update msg model =
 
         ToggleRpAttrState id ->
             let
-                _ =
-                    Debug.log "ToggleRpAttrState" ( id, Dict.get id model.rpAttrState )
-
                 currState =
                     Dict.get id model.rpAttrState
 
@@ -487,6 +505,10 @@ init _ =
             , { name = "prop2"
               , rpType = RPIBool
               , semantic = Edge
+              }
+            , { name = "prop3"
+              , rpType = RPIBool
+              , semantic = EndNode
               }
             ]
 
