@@ -31,11 +31,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: install elm-test
-        run: npm install elm elm-test
+        run: |
+          npm install -g elm
+          npm install -g elm-test
 
       - name: build Main
-        run: elm make src/Main.elm --output=main.js
+        run: npx elm make src/Main.elm --output=main.js
 
       - name: run test
-        run: elm-test
+        run: npx elm-test
 
