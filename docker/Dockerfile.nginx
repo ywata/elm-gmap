@@ -9,8 +9,8 @@ RUN apt-get update && \
 # Remove default Nginx configuration and add our custom configuration
 RUN rm /etc/nginx/conf.d/default.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/
-COPY docker/nginx_entrypoint.sh /usr/local/bin/
-RUN chmod 0755 /usr/local/bin/nginx_entrypoint.sh
+COPY docker/nginx_entrypoint.sh ./bin/
+RUN chmod 0755 ./bin/nginx_entrypoint.sh
 EXPOSE 8081
 
-ENTRYPOINT ["/usr/local/bin/nginx_entrypoint.sh"]
+ENTRYPOINT ["./bin/nginx_entrypoint.sh"]
