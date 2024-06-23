@@ -19,7 +19,7 @@ services:
       - LOGIN_USER=${LOGIN_USER}
       - LOGIN_PASSWORD=${LOGIN_PASSWORD}
     ports:
-      - 8080:8081
+      - 8000:8081
     networks:
       - elmgmapnet
     volumes:
