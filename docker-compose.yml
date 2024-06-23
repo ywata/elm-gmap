@@ -1,0 +1,31 @@
+version: '3'
+services:
+  app:
+    build:
+      context: . 
+      dockerfile: docker/Dockerfile.app # Path to the Dockerfile for the app
+    environment:
+      - API_KEY=${API_KEY}
+    networks:
+      - elmgmapnet
+    depends_on:
+      - nginx 
+
+  nginx:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile.nginx
+    environment:
+      - LOGIN_USER=${LOGIN_USER}
+      - LOGIN_PASSWORD=${LOGIN_PASSWORD}
+    ports:
+      - 8080:8081
+    networks:
+      - elmgmapnet
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+
+networks:
+  elmgmapnet:
+    driver: bridge
+

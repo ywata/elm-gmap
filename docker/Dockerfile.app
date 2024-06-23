@@ -29,7 +29,7 @@ COPY --chown=webapp:webapp  ./docker/run_app.sh ./bin/run_app.sh
 RUN npx elm make src/Main.elm --output=main.js
 
 # Command to run the application
-EXPOSE 8080
+EXPOSE 8082
 # run command to start the server
-CMD ./bin/run_app.sh ${API_KEY} 8080
+CMD ./bin/run_app.sh ${API_KEY} 8082
 
